@@ -3,13 +3,13 @@ VENV := .venv
 PYTHON := $(VENV)/bin/python
 UV := uv
 MAIN_DIRECTORY := src
-
+ARGS := 
 
 install:
 	$(UV) sync
 
 run: install
-	$(UV) run python -m $(MAIN_DIRECTORY)
+	$(UV) run python -m $(MAIN_DIRECTORY) $(ARGS)
 
 debug:
 	$(UV) run python -m pdb $(MAIN_DIRECTORY)/__main__.py

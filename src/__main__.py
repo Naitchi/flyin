@@ -1,6 +1,6 @@
 from enum import Enum
 import argparse
-# from parsing import parser
+from .parsing import Parser
 
 
 class ZoneEnum(str, Enum):
@@ -10,6 +10,8 @@ class ZoneEnum(str, Enum):
     BLOCKED = 'blocked'
 
 
+# TODO pas sur de ca, ca doit etre juste un seul mot
+# mais y'a pas de liste defini
 class ColorEnum(str, Enum):
     RED = 'red'
     GREEN = 'green'
@@ -43,6 +45,7 @@ class Hub():
 
 class FlyInApp():
     def __init__(self):
+        self.nb_drone: int = 0
         self.hub = []
 
     def run(self):
@@ -54,13 +57,21 @@ class FlyInApp():
             help="Input file for your map"
         )
         args = argparser.parse_args()
-        filename = args.map
-        print(filename)
+        try:
+            with open(args.map, "r") as f:
+                content = f.read()
+                Parser.run_trough_file(content)
+        except (
+            FileNotFoundError,
+            PermissionError,
+            IsADirectoryError,
+            Exception
+        ) as e:
+            print(e)
 
 
 def main():
-    fly_in_app = FlyInApp()
-    fly_in_app.run()
+    FlyInApp().run()
 
 
 main()
