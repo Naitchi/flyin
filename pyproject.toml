@@ -1,0 +1,11 @@
+[project]
+name = "Fly-in"
+version = "0.1.0"
+description = "Flyin root project"
+requires-python = ">=3.10"
+dependencies = [
+	"pydantic>=2.0,<3",
+	"flake8",
+	"mypy",
+	"argparse"
+]
