@@ -168,9 +168,6 @@ class Parser():
             print(e)
             sys.exit()
 
-    @staticmethod
-    def get_hub_from_name(name: str) -> Hub:
-        pass
     # TODO faire une fonctions pour chaque:
     # Si le nbr de drone est pas defini on cherche ca (requis: entier positif, premier ligne (hors commentaires/ligne vide))
     # Si le nb_drone est defini on cherche les hubs (les trucs qui commencent par "start_hub:", "end_hub:" et "hub:"?) (requis: pas de '-' dans le nom, et pas deux hub avec les memes coordonnees)

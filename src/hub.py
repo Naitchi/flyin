@@ -18,6 +18,11 @@ class ColorEnum(str, Enum):
     NONE = 'none'
 
 
+class Connection():
+    def __init__(self, linked_to: str, max_link_capacity: int):
+        self.linked_to: str = linked_to
+        self.max_link_capacity: int = max_link_capacity
+
 class Hub():
     def __init__(
         self,
@@ -38,4 +43,4 @@ class Hub():
         self.zone = zone
         self.color = color
         self.max_cap = max_cap
-        self.connection = []
+        self.connection: list[Connection] = []
