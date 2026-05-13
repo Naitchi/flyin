@@ -1,6 +1,7 @@
 from enum import Enum
 
 
+# TODO c'est pas utilise ca encore, il faudrait
 class ZoneEnum(str, Enum):
     RESTRICTED = 'restricted'
     NORMAL = 'normal'
@@ -8,20 +9,11 @@ class ZoneEnum(str, Enum):
     BLOCKED = 'blocked'
 
 
-# TODO pas sur de ca, ca doit etre juste un seul mot
-# mais y'a pas de liste defini
-class ColorEnum(str, Enum):
-    RED = 'red'
-    GREEN = 'green'
-    BLUE = 'blue'
-    YELLOW = 'yellow'
-    NONE = 'none'
-
-
 class Connection():
     def __init__(self, linked_to: str, max_link_capacity: int):
         self.linked_to: str = linked_to
         self.max_link_capacity: int = max_link_capacity
+
 
 class Hub():
     def __init__(
