@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-# TODO c'est pas utilise ca encore, il faudrait
+# TODO c'est pas utilise ca encore, il faudrait et il faudra que je comprenne
 class ZoneEnum(str, Enum):
     RESTRICTED = 'restricted'
     NORMAL = 'normal'
@@ -18,21 +18,28 @@ class Connection():
 class Hub():
     def __init__(
         self,
-        name,
-        end,
-        start,
-        y,
-        x,
-        zone,
-        color,
-        max_cap
+        name: str,
+        end: bool,
+        start: bool,
+        y: int,
+        x: int,
+        zone: str,
+        color: str,
+        max_cap: int,
+        nb_drone: int = 0
     ):
-        self.name = name
+        self.nb_drone: int = nb_drone  # TODO init ca au nombre de drone total si c'est le start et bien check si son max_cap est pas depasse sinon raise error
+        self.name: str = name
         self.end: bool = end
         self.start: bool = start
         self.x: int = x
         self.y: int = y
-        self.zone = zone
-        self.color = color
-        self.max_cap = max_cap
+        self.x_px: int = 0
+        self.y_px: int = 0
+        self.zone: str = zone
+        self.color: str = color
+        self.max_cap: int = max_cap
         self.connection: list[Connection] = []
+        self.score = -1  # TODO faire une fonction pour init ca.
+        if start:
+            self.score = 0

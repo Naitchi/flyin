@@ -50,6 +50,24 @@ class Display():
         return (0, 0, 0, 255)
 
     @staticmethod
+    def make_drone(hubs: list[Hub], nb_drone: int):
+        start: Hub
+        for hub in hubs:
+            if hub.start:
+                start = hub
+        image = pyglet.image.load("./assets/drone.png")
+        sprite = pyglet.sprite.Sprite(image, x=start.x_px-37, y=start.y_px-37)
+        label = pyglet.text.Label(
+            str(nb_drone),
+            x=start.x_px, y=start.y_px,
+            anchor_x="center", anchor_y="center",
+            font_size=10,
+            font_name="Arial Bold",
+            color=(0, 0, 0),
+        )
+        return sprite, label
+
+    @staticmethod
     def make_arrow(x1, y1, x2, y2, radius=25, color=(255, 255, 255)):
         angle = math.atan2(y2 - y1, x2 - x1)
 
@@ -71,8 +89,14 @@ class Display():
         return line, tip
 
     @classmethod
-    def make_circle(cls, x, y, hub: Hub) -> pyglet.shapes.Circle:
-        return pyglet.shapes.Circle(x, y, 25, color=cls.hub_color(hub))
+    def make_circle(
+        cls,
+        x, y,
+        hub: Hub,
+        radius: int = 25,
+        color: tuple[int, int, int] = (255, 0, 0)
+    ) -> pyglet.shapes.Circle:
+        return pyglet.shapes.Circle(x, y, radius, color=color)
 
     @classmethod
     def make_label(cls, x, y, text, hub: Hub) -> pyglet.text.Label:
@@ -117,13 +141,16 @@ class Display():
 
     @classmethod
     def build_hubs(cls, hubs, to_screen, use_legend):
-        cercles, labels = [], []
+        cercles, borders, labels = [], [], []
         for idx, hub in enumerate(hubs):
             x, y = to_screen(hub.x, hub.y)
+            hub.x_px = x
+            hub.y_px = y
             text = str(idx + 1) if use_legend else hub.name
             cercles.append(cls.make_circle(x, y, hub))
+            borders.append(cls.make_circle(x, y, hub, 27, (117, 124, 136)))
             labels.append(cls.make_label(x, y, text, hub))
-        return cercles, labels
+        return cercles, borders, labels
 
     @classmethod
     def build_arrows(cls, hubs, to_screen):
@@ -189,14 +216,18 @@ class Display():
         use_legend = max(Counter(round(h.y)
                          for h in hubs).values()) > cls.legend_threshold
 
-        cercles, labels = cls.build_hubs(hubs, to_screen, use_legend)
+        cercles, borders, labels = cls.build_hubs(hubs, to_screen, use_legend)
         arrows = cls.build_arrows(hubs, to_screen)
         legend_items = cls.build_legend(hubs, window) if use_legend else []
         help_label = cls.make_help_label(window, use_legend)
+        # TODO generer le drone en function du hub
+        drone, label_drone = cls.make_drone(hubs, 25)
 
         @window.event
         def on_draw():
             window.clear()
+            for border in borders:
+                border.draw()
             for cercle in cercles:
                 cercle.draw()
             for line, tip in arrows:
@@ -209,6 +240,8 @@ class Display():
                     bg.draw()
                     lbl.draw()
             help_label.draw()
+            drone.draw()
+            label_drone.draw()
 
         @window.event
         def on_key_press(symbol, modifiers):

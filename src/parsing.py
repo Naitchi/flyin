@@ -23,7 +23,8 @@ class Parser():
                 cls.check_for_hub(words)
             elif words[0] == "connection:":
                 cls.add_connection(words)
-        return (cls.nb_drone, cls.hubs)
+        # TODO check si y'a bien un start et un end sinon raise
+        return (cls.hubs)
 
     @classmethod
     def check_for_nb_drone(cls, words: list[str]):
@@ -52,18 +53,20 @@ class Parser():
             if len(words) < 4:
                 raise ValueError("Error, not enough arguments on hub. ",
                                  "<start_/end_>hub: <name> <x> <y> [metadata]")
-            if words[0] == "start_hub":
+            if words[0] == "start_hub:":
                 if cls.start_hub:
                     raise ValueError(
                         "Error Two or more start_hub. ",
                         "There should be only one.")
                 cls.start_hub = True
-            elif words[0] == "end_hub":
+                start = True
+            elif words[0] == "end_hub:":
                 if cls.end_hub:
                     raise ValueError(
                         "Error Two or more end_hub. ",
                         "There should be only one.")
                 cls.end_hub = True
+                end = True
             name = words[1]
             x = words[2]
             y = words[3]
@@ -108,6 +111,17 @@ class Parser():
                                  "Two hubs cannot have the same coordonnates.")
             color, zone, max_drones = cls.get_metadata_hub(
                 [word.replace("[", "").replace("]", "") for word in metadata])
+            if start or end:
+                return Hub(
+                    start=start,
+                    end=end,
+                    name=name,
+                    x=x,
+                    y=y,
+                    color=color,
+                    zone=zone,
+                    max_cap=cls.nb_drone,
+                    nb_drone=cls.nb_drone)
             return Hub(
                 start=start,
                 end=end,
