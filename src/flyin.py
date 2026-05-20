@@ -1,0 +1,92 @@
+import argparse
+
+from .hub import Hub, ZoneEnum
+from .parsing import Parser
+from .display import Display
+
+
+class FlyInApp():
+    hubs = []
+
+    @classmethod
+    def run(cls) -> None:
+        argparser = argparse.ArgumentParser(description="FlyIn")
+        argparser.add_argument(
+            "--map",
+            type=str,
+            default="./maps/easy/01_linear_path.txt",
+            help="Input file for your map"
+        )
+        args = argparser.parse_args()
+        try:
+            with open(args.map, "r") as f:
+                content = f.read()
+                cls.hubs = Parser.run_trough_file(content)
+            start: Hub
+            for hub in cls.hubs:
+                if hub.start:
+                    start = hub
+                    break
+            cls.calculate_score(start)
+            Display.run(cls.hubs)
+        except (
+            FileNotFoundError,
+            PermissionError,
+            IsADirectoryError,
+            Exception
+        ) as e:
+            print(e)
+
+    @classmethod
+    def calculate_score(cls, hub: Hub) -> None:
+        for connection in hub.connection:
+            next_hub = cls.get_hub_from_name(connection.linked_to)
+            if next_hub.zone == ZoneEnum.PRIORITY and \
+                    hub.score + 1 < next_hub.score:
+                next_hub.score = hub.score + 1  # TODO pour l'instant la prio est juste compte en point mais y'a un monde ou je le met dans le l'algo de choix de path. Mais pour l'instant on a un premier resultat
+            elif next_hub.zone == ZoneEnum.NORMAL and \
+                    hub.score + 2 < next_hub.score:
+                next_hub.score = hub.score + 2
+            elif next_hub.zone == ZoneEnum.RESTRICTED and \
+                    hub.score + 3 < next_hub.score:
+                next_hub.score = hub.score + 3
+            cls.calculate_score(next_hub)
+
+    @classmethod
+    def get_hub_from_name(cls, name: str) -> Hub:
+        rslt: Hub
+        for hub in cls.hubs:
+            if hub.name == name:
+                rslt = hub
+                break
+        return rslt
+
+    @classmethod
+    def action(cls) -> None:
+        hubs: list[Hub] = [hub for hub in cls.hubs if hub.nb_drone]
+        for hub in hubs[::-1]:
+            possible_move: list[dict[int, Hub]] = []
+            if hub.nb_drone_waiting_restricted:
+                hub.nb_drone += hub.nb_drone_waiting_restricted
+                hub.nb_drone_waiting_restricted = 0
+            if hub.end:
+                continue
+            for connection in hub.connection:
+
+                possible_move.append({
+                        "max_cap_link": connection.max_link_capacity,
+                        "hub": cls.get_hub_from_name(connection.linked_to)
+                    })
+            possible_move.sort(key=lambda x: x["hub"].score)
+            for best_hub in possible_move:
+                nb_drones_to_move: int = 0
+                if best_hub["hub"].done and best_hub["hub"].max_cap > best_hub["hub"].nb_drone:
+                    nb_drones_to_move = best_hub["hub"].max_cap - best_hub["hub"].nb_drone
+                    if nb_drones_to_move > best_hub["max_cap_link"]:
+                        nb_drones_to_move = best_hub["max_cap_link"]
+                    if best_hub["hub"].zone == ZoneEnum.RESTRICTED:
+                        best_hub["hub"].nb_drone_waiting_restricted = nb_drones_to_move
+                        hub.nb_drone -= nb_drones_to_move
+                    elif best_hub["hub"].zone == ZoneEnum.NORMAL or best_hub["hub"].zone == ZoneEnum.PRIORITY:
+                        best_hub["hub"].nb_drone = nb_drones_to_move
+                        hub.nb_drone -= nb_drones_to_move

@@ -11,6 +11,7 @@ class Parser():
     hubs: list[Hub] = []
     coordonnates: set[tuple[int, int]] = set()
 
+    # TODO check tout les hubs et le propriete puis comparer avec la map pour verifier que le parsing est bon
     @classmethod
     def run_trough_file(cls, content: str):
         for line in content.split('\n'):
@@ -23,7 +24,9 @@ class Parser():
                 cls.check_for_hub(words)
             elif words[0] == "connection:":
                 cls.add_connection(words)
-        # TODO check si y'a bien un start et un end sinon raise
+        if not cls.start_hub or not cls.end_hub:
+            print("Error missing a start_hub or end_hub.")
+            sys.exit()
         return (cls.hubs)
 
     @classmethod
@@ -111,7 +114,8 @@ class Parser():
                                  "Two hubs cannot have the same coordonnates.")
             color, zone, max_drones = cls.get_metadata_hub(
                 [word.replace("[", "").replace("]", "") for word in metadata])
-            if start or end:
+            # TODO je pourrais refactor ca
+            if start:
                 return Hub(
                     start=start,
                     end=end,
@@ -122,6 +126,16 @@ class Parser():
                     zone=zone,
                     max_cap=cls.nb_drone,
                     nb_drone=cls.nb_drone)
+            elif end:
+                return Hub(
+                    start=start,
+                    end=end,
+                    name=name,
+                    x=x,
+                    y=y,
+                    color=color,
+                    zone=zone,
+                    max_cap=cls.nb_drone)
             return Hub(
                 start=start,
                 end=end,
@@ -157,6 +171,7 @@ class Parser():
     @classmethod
     def add_connection(cls, words: list[str]) -> None:
         max_link_capacity: int = 1
+        metadata: list[str] = []
         try:
             if len(words) < 2:
                 raise ValueError("Error, not enough arguments on connection. ",
@@ -164,10 +179,15 @@ class Parser():
             connections = words[1].split('-')
             if len(connections) > 2:
                 raise ValueError("Error too much '-' in the connections line")
-            # TODO check ca c'est pas bon je geres pas les metadata atm je
-            # crois
-            # if len(words) > 2:
-            #    words[2].split('')
+            if len(words) > 2:
+                metadata.append(
+                    words[2].word.replace("[", "").replace("]", ""))
+                metadata = metadata[0].split('=')
+                if len(metadata) < 2:
+                    raise ValueError("Error in a metadata of a connection. ",
+                                     "Should be connection: <name1>-<name2> ",
+                                     "[max_link_capacity=<number>]")
+                max_link_capacity = int(metadata[1])
             hub1: Hub = next(
                 (h for h in cls.hubs if h.name == connections[0]), None)
             hub2: Hub = next(

@@ -5,7 +5,7 @@ from enum import Enum
 from collections import Counter
 
 
-class ColorEnum(str, Enum):
+class ColorEnum(str, Enum):  # TODO fix les couleurs
     RED = 'red'
     GREEN = 'green'
     BLUE = 'blue'
@@ -50,16 +50,12 @@ class Display():
         return (0, 0, 0, 255)
 
     @staticmethod
-    def make_drone(hubs: list[Hub], nb_drone: int):
-        start: Hub
-        for hub in hubs:
-            if hub.start:
-                start = hub
+    def make_drone(hub: Hub):
         image = pyglet.image.load("./assets/drone.png")
-        sprite = pyglet.sprite.Sprite(image, x=start.x_px-37, y=start.y_px-37)
+        sprite = pyglet.sprite.Sprite(image, x=hub.x_px-37, y=hub.y_px-37)
         label = pyglet.text.Label(
-            str(nb_drone),
-            x=start.x_px, y=start.y_px,
+            str(hub.nb_drone),
+            x=hub.x_px, y=hub.y_px,
             anchor_x="center", anchor_y="center",
             font_size=10,
             font_name="Arial Bold",
@@ -129,7 +125,7 @@ class Display():
 
     @staticmethod
     def make_help_label(window, use_legend) -> pyglet.text.Label:
-        hints = ["Echap : quit", "F11 : Fullscreen"]
+        hints = ["Echap : quit"]
         if use_legend:
             hints.append("L : Show hubs names")
         return pyglet.text.Label(
@@ -141,7 +137,7 @@ class Display():
 
     @classmethod
     def build_hubs(cls, hubs, to_screen, use_legend):
-        cercles, borders, labels = [], [], []
+        cercles, borders, labels, drones, label_drones = [], [], [], [], []
         for idx, hub in enumerate(hubs):
             x, y = to_screen(hub.x, hub.y)
             hub.x_px = x
@@ -150,7 +146,11 @@ class Display():
             cercles.append(cls.make_circle(x, y, hub))
             borders.append(cls.make_circle(x, y, hub, 27, (117, 124, 136)))
             labels.append(cls.make_label(x, y, text, hub))
-        return cercles, borders, labels
+            if hub.nb_drone:
+                drone, label_drone = cls.make_drone(hub)
+                drones.append(drone)
+                label_drones.append(label_drone)
+        return cercles, borders, labels, drones, label_drones
 
     @classmethod
     def build_arrows(cls, hubs, to_screen):
@@ -216,12 +216,11 @@ class Display():
         use_legend = max(Counter(round(h.y)
                          for h in hubs).values()) > cls.legend_threshold
 
-        cercles, borders, labels = cls.build_hubs(hubs, to_screen, use_legend)
+        cercles, borders, labels, drones, label_drones = cls.build_hubs(
+            hubs, to_screen, use_legend)
         arrows = cls.build_arrows(hubs, to_screen)
         legend_items = cls.build_legend(hubs, window) if use_legend else []
         help_label = cls.make_help_label(window, use_legend)
-        # TODO generer le drone en function du hub
-        drone, label_drone = cls.make_drone(hubs, 25)
 
         @window.event
         def on_draw():
@@ -240,15 +239,15 @@ class Display():
                     bg.draw()
                     lbl.draw()
             help_label.draw()
-            drone.draw()
-            label_drone.draw()
+            for drone in drones:
+                drone.draw()
+            for label_drone in label_drones:
+                label_drone.draw()
 
         @window.event
         def on_key_press(symbol, modifiers):
             if symbol == pyglet.window.key.ESCAPE:
                 window.close()
-            if symbol == pyglet.window.key.F11:
-                window.set_fullscreen(not window.fullscreen)
             if symbol == pyglet.window.key.L and use_legend:
                 cls.legend_visible = not cls.legend_visible
 
