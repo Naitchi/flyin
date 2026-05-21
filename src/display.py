@@ -1,6 +1,7 @@
 import math
 import pyglet
-from .hub import Hub
+
+from .hub import Hub, ZoneEnum
 from enum import Enum
 from collections import Counter
 
@@ -104,6 +105,45 @@ class Display():
             font_name="Arial Bold",
             color=cls.hub_label_color(hub),
         )
+
+    @staticmethod
+    def get_hub_from_name(hubs: list[Hub], name: str) -> Hub:
+        rslt: Hub
+        for hub in hubs:
+            if hub.name == name:
+                rslt = hub
+                break
+        return rslt
+
+    @classmethod
+    def action(cls, data: list[Hub]) -> None:
+        hubs: list[Hub] = [hub for hub in data if hub.nb_drone]
+        for hub in hubs[::-1]:
+            possible_move: list[dict[int, Hub]] = []
+            if hub.nb_drone_waiting_restricted:
+                hub.nb_drone += hub.nb_drone_waiting_restricted
+                hub.nb_drone_waiting_restricted = 0
+            if hub.end:
+                continue
+            for connection in hub.connection:
+
+                possible_move.append({
+                        "max_cap_link": connection.max_link_capacity,
+                        "hub": cls.get_hub_from_name(data, connection.linked_to)
+                    })
+            possible_move.sort(key=lambda x: x["hub"].score)
+            for best_hub in possible_move:
+                nb_drones_to_move: int = 0
+                if best_hub["hub"].max_cap > best_hub["hub"].nb_drone:
+                    nb_drones_to_move = best_hub["hub"].max_cap - best_hub["hub"].nb_drone
+                    if nb_drones_to_move > best_hub["max_cap_link"]:
+                        nb_drones_to_move = best_hub["max_cap_link"]
+                    if best_hub["hub"].zone == ZoneEnum.RESTRICTED:
+                        best_hub["hub"].nb_drone_waiting_restricted += nb_drones_to_move
+                        hub.nb_drone -= nb_drones_to_move
+                    elif best_hub["hub"].zone == ZoneEnum.NORMAL or best_hub["hub"].zone == ZoneEnum.PRIORITY:
+                        best_hub["hub"].nb_drone += nb_drones_to_move
+                        hub.nb_drone -= nb_drones_to_move
 
     @classmethod
     def make_legend_item(
@@ -222,6 +262,20 @@ class Display():
         legend_items = cls.build_legend(hubs, window) if use_legend else []
         help_label = cls.make_help_label(window, use_legend)
 
+        def step():
+            cls.action(hubs)
+            drones.clear()
+            label_drones.clear()
+            for hub in hubs:
+                if hub.nb_drone:
+                    drone, label_drone = cls.make_drone(hub)
+                    drones.append(drone)
+                    label_drones.append(label_drone)
+            window.dispatch_event("on_draw")
+
+        def update(dt):
+            step()
+
         @window.event
         def on_draw():
             window.clear()
@@ -250,5 +304,9 @@ class Display():
                 window.close()
             if symbol == pyglet.window.key.L and use_legend:
                 cls.legend_visible = not cls.legend_visible
+            if symbol == pyglet.window.key.RIGHT:
+                step()
+                for hub in hubs:
+                    print(hub.name, hub.nb_drone)
 
         pyglet.app.run()

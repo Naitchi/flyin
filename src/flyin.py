@@ -60,33 +60,3 @@ class FlyInApp():
                 rslt = hub
                 break
         return rslt
-
-    @classmethod
-    def action(cls) -> None:
-        hubs: list[Hub] = [hub for hub in cls.hubs if hub.nb_drone]
-        for hub in hubs[::-1]:
-            possible_move: list[dict[int, Hub]] = []
-            if hub.nb_drone_waiting_restricted:
-                hub.nb_drone += hub.nb_drone_waiting_restricted
-                hub.nb_drone_waiting_restricted = 0
-            if hub.end:
-                continue
-            for connection in hub.connection:
-
-                possible_move.append({
-                        "max_cap_link": connection.max_link_capacity,
-                        "hub": cls.get_hub_from_name(connection.linked_to)
-                    })
-            possible_move.sort(key=lambda x: x["hub"].score)
-            for best_hub in possible_move:
-                nb_drones_to_move: int = 0
-                if best_hub["hub"].done and best_hub["hub"].max_cap > best_hub["hub"].nb_drone:
-                    nb_drones_to_move = best_hub["hub"].max_cap - best_hub["hub"].nb_drone
-                    if nb_drones_to_move > best_hub["max_cap_link"]:
-                        nb_drones_to_move = best_hub["max_cap_link"]
-                    if best_hub["hub"].zone == ZoneEnum.RESTRICTED:
-                        best_hub["hub"].nb_drone_waiting_restricted = nb_drones_to_move
-                        hub.nb_drone -= nb_drones_to_move
-                    elif best_hub["hub"].zone == ZoneEnum.NORMAL or best_hub["hub"].zone == ZoneEnum.PRIORITY:
-                        best_hub["hub"].nb_drone = nb_drones_to_move
-                        hub.nb_drone -= nb_drones_to_move
