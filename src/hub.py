@@ -128,6 +128,7 @@ class Hub():
         self.color: ColorEnum = color
         self.max_cap: int = max_cap
         self.connection: list[Connection] = []
-        self.score = 9999
-        if start:
-            self.score = 0
+        self.incoming: list[str] = []
+        self.remaining_cost = 9999
+        if end:
+            self.remaining_cost = 0

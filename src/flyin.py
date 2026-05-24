@@ -25,12 +25,8 @@ class FlyInApp():
             with open(args.map, "r") as f:
                 content = f.read()
                 cls.hubs = Parser.run_trough_file(content)
-            start: Hub
-            for hub in cls.hubs:
-                if hub.start:
-                    start = hub
-                    break
-            cls.calculate_score(start)
+            end = next(hub for hub in cls.hubs if hub.end)
+            cls.calculate_remaining_cost(end)
             Display.run(cls.hubs)
         except (
             FileNotFoundError,
@@ -41,26 +37,26 @@ class FlyInApp():
             print(e)
 
     @classmethod
-    def calculate_score(cls, hub: Hub) -> None:
-        """Propagate a cost score from a hub to all reachable hubs.
+    def calculate_remaining_cost(cls, hub: Hub) -> None:
+        """Propagate remaining cost from end hub to all hubs.
+
+        This calculates how much it costs to reach the end hub from
+        any given hub. Needed for optimal path decisions during routing.
 
         Args:
-            hub: Current hub used as the recursion source.
+            hub: Current hub used as the recursion source (typically end).
         """
-        for connection in hub.connection:
-            next_hub = cls.get_hub_from_name(connection.linked_to)
-            old_score = next_hub.score
-            if next_hub.zone == ZoneEnum.PRIORITY and \
-                    hub.score + 1 < next_hub.score:
-                next_hub.score = hub.score + 1
-            elif next_hub.zone == ZoneEnum.NORMAL and \
-                    hub.score + 2 < next_hub.score:
-                next_hub.score = hub.score + 2
-            elif next_hub.zone == ZoneEnum.RESTRICTED and \
-                    hub.score + 3 < next_hub.score:
-                next_hub.score = hub.score + 3
-            if next_hub.score < old_score:
-                cls.calculate_score(next_hub)
+        weights = {
+            ZoneEnum.PRIORITY: 1,
+            ZoneEnum.NORMAL: 2,
+            ZoneEnum.RESTRICTED: 3,
+        }
+        for incoming_name in hub.incoming:
+            prev_hub = cls.get_hub_from_name(incoming_name)
+            cost = hub.remaining_cost + weights.get(hub.zone, 1)
+            if cost < prev_hub.remaining_cost:
+                prev_hub.remaining_cost = cost
+                cls.calculate_remaining_cost(prev_hub)
 
     @classmethod
     def get_hub_from_name(cls, name: str) -> Hub:

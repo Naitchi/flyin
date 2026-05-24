@@ -230,12 +230,15 @@ class Parser():
                 (h for h in cls.hubs if h.name == connections[1]), None)
             if not hub1 or not hub2:
                 raise ValueError("Error hub name not found in connection.")
+            if any(
+                connection.linked_to == hub2.name
+                for connection in hub1.connection
+            ):
+                raise ValueError("Error two connection between the same ",
+                                 "hub.")
             hub1.connection.append(
                 Connection(hub2.name, max_link_capacity))
-            for connection in hub2.connection:
-                if connection.linked_to == hub1.name:
-                    raise ValueError("Error two connection between the same ",
-                                     "hub.")
+            hub2.incoming.append(hub1.name)
         except (ValueError, Exception) as e:
             print(e)
             sys.exit()

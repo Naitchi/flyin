@@ -164,7 +164,7 @@ class Display():
                     "max_cap_link": connection.max_link_capacity,
                     "hub": cls.get_hub_from_name(data, connection.linked_to),
                 })
-            possible_move.sort(key=lambda x: x["hub"].score)
+            possible_move.sort(key=lambda x: x["hub"].remaining_cost)
             for best_hub in possible_move:
                 nb_drones_to_move: int = 0
                 if best_hub["hub"].max_cap > best_hub["hub"].nb_drone:
