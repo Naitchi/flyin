@@ -6,10 +6,13 @@ from .display import Display
 
 
 class FlyInApp():
-    hubs = []
+    """Application controller for loading maps and running the simulation."""
+
+    hubs: list[Hub] = []
 
     @classmethod
     def run(cls) -> None:
+        """Parse the selected map, compute scores, and start the UI."""
         argparser = argparse.ArgumentParser(description="FlyIn")
         argparser.add_argument(
             "--map",
@@ -39,11 +42,16 @@ class FlyInApp():
 
     @classmethod
     def calculate_score(cls, hub: Hub) -> None:
+        """Propagate a cost score from a hub to all reachable hubs.
+
+        Args:
+            hub: Current hub used as the recursion source.
+        """
         for connection in hub.connection:
             next_hub = cls.get_hub_from_name(connection.linked_to)
             if next_hub.zone == ZoneEnum.PRIORITY and \
                     hub.score + 1 < next_hub.score:
-                next_hub.score = hub.score + 1  # TODO pour l'instant la prio est juste compte en point mais y'a un monde ou je le met dans le l'algo de choix de path. Mais pour l'instant on a un premier resultat
+                next_hub.score = hub.score + 1
             elif next_hub.zone == ZoneEnum.NORMAL and \
                     hub.score + 2 < next_hub.score:
                 next_hub.score = hub.score + 2
@@ -54,6 +62,17 @@ class FlyInApp():
 
     @classmethod
     def get_hub_from_name(cls, name: str) -> Hub:
+        """Return the hub matching the provided name.
+
+        Args:
+            name: Hub identifier to search for.
+
+        Returns:
+            The matching hub.
+
+        Raises:
+            ValueError: If no hub matches the provided name.
+        """
         rslt: Hub
         for hub in cls.hubs:
             if hub.name == name:

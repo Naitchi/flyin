@@ -1,19 +1,29 @@
-from .hub import Hub, Connection
+from .hub import Hub, Connection, ZoneEnum, ColorEnum
 import sys
 from typing import Any
 import re
 
 
 class Parser():
-    nb_drone = 0
-    start_hub = False
-    end_hub = False
+    """Parse map files into hubs and connections."""
+
+    nb_drone: int = 0
+    start_hub: bool = False
+    end_hub: bool = False
     hubs: list[Hub] = []
     coordonnates: set[tuple[int, int]] = set()
 
-    # TODO check tout les hubs et le propriete puis comparer avec la map pour verifier que le parsing est bon
+    # TODO check hubs/properties and compare with the map after parsing
     @classmethod
-    def run_trough_file(cls, content: str):
+    def run_trough_file(cls, content: str) -> list[Hub]:
+        """Parse a map file content into a list of hubs.
+
+        Args:
+            content: Raw text content of the map file.
+
+        Returns:
+            The parsed hubs in declaration order.
+        """
         for line in content.split('\n'):
             if not line.strip() or line.strip().startswith('#'):
                 continue
@@ -27,10 +37,15 @@ class Parser():
         if not cls.start_hub or not cls.end_hub:
             print("Error missing a start_hub or end_hub.")
             sys.exit()
-        return (cls.hubs)
+        return cls.hubs
 
     @classmethod
-    def check_for_nb_drone(cls, words: list[str]):
+    def check_for_nb_drone(cls, words: list[str]) -> None:
+        """Parse and validate the number of drones line.
+
+        Args:
+            words: Tokenized line content.
+        """
         try:
             if words[0] == "nb_drones:":
                 cls.nb_drone = int(words[1])
@@ -45,7 +60,12 @@ class Parser():
             sys.exit()
 
     @classmethod
-    def check_for_hub(cls, words: list[str]) -> Hub:
+    def check_for_hub(cls, words: list[str]) -> None:
+        """Parse a hub declaration and append the resulting hub.
+
+        Args:
+            words: Tokenized line content.
+        """
         start: bool = False
         end: bool = False
         name: str = ""
@@ -97,8 +117,21 @@ class Parser():
             y: Any,
             metadata: list[str]
     ) -> Hub:
+        """Build a validated hub instance from parsed values.
+
+        Args:
+            start: Whether the hub is the start hub.
+            end: Whether the hub is the end hub.
+            name: Hub name.
+            x: Raw X coordinate value.
+            y: Raw Y coordinate value.
+            metadata: Raw metadata tokens.
+
+        Returns:
+            A validated hub instance.
+        """
         color: str = "none"
-        zone: str = "normal"
+        zone_str: str = "normal"
         max_drones: int = 1
         try:
             if not re.fullmatch(r"\w+", name):
@@ -112,46 +145,40 @@ class Parser():
             if len(cls.coordonnates) > len(cls.hubs)+1:
                 raise ValueError("Error in coordonnates of hub. ",
                                  "Two hubs cannot have the same coordonnates.")
-            color, zone, max_drones = cls.get_metadata_hub(
+            color, zone_str, max_drones = cls.get_metadata_hub(
                 [word.replace("[", "").replace("]", "") for word in metadata])
-            # TODO je pourrais refactor ca
+            try:
+                zone_enum = ZoneEnum(zone_str)
+            except ValueError:
+                raise ValueError(f"Unknown zone type: {zone_str}")
+            hub_kwargs = {
+                "start": start,
+                "end": end,
+                "name": name,
+                "x": x,
+                "y": y,
+                "color": color,
+                "zone": zone_enum,
+                "max_cap": cls.nb_drone if (start or end) else max_drones,
+            }
             if start:
-                return Hub(
-                    start=start,
-                    end=end,
-                    name=name,
-                    x=x,
-                    y=y,
-                    color=color,
-                    zone=zone,
-                    max_cap=cls.nb_drone,
-                    nb_drone=cls.nb_drone)
-            elif end:
-                return Hub(
-                    start=start,
-                    end=end,
-                    name=name,
-                    x=x,
-                    y=y,
-                    color=color,
-                    zone=zone,
-                    max_cap=cls.nb_drone)
-            return Hub(
-                start=start,
-                end=end,
-                name=name,
-                x=x,
-                y=y,
-                color=color,
-                zone=zone,
-                max_cap=max_drones)
+                hub_kwargs["nb_drone"] = cls.nb_drone
+            return Hub(**hub_kwargs)
         except (ValueError, Exception) as e:
             print(e)
             sys.exit()
 
     @staticmethod
-    def get_metadata_hub(metadata: list[str]) -> tuple[str, str, int]:
-        color: str = "none"
+    def get_metadata_hub(metadata: list[str]) -> tuple[ColorEnum, str, int]:
+        """Extract color, zone, and capacity metadata from a hub line.
+
+        Args:
+            metadata: List of raw metadata tokens.
+
+        Returns:
+            A tuple containing the color enum, zone string, and max drones.
+        """
+        color_str: str = "none"
         zone: str = "normal"
         max_drones: int = 1
         try:
@@ -160,16 +187,25 @@ class Parser():
                 if words[0] == "zone":
                     zone = words[1]
                 elif words[0] == "color":
-                    color = words[1]
+                    color_str = words[1]
                 elif words[0] == "max_drones":
                     max_drones = int(words[1])
         except (ValueError, Exception) as e:
             print(e)
             sys.exit()
-        return (color, zone, max_drones)
+        try:
+            color_enum = ColorEnum(color_str)
+        except ValueError:
+            raise ValueError(f"Unknown color type: {color_str}")
+        return (color_enum, zone, max_drones)
 
     @classmethod
     def add_connection(cls, words: list[str]) -> None:
+        """Parse and attach a connection between two hubs.
+
+        Args:
+            words: Tokenized line content.
+        """
         max_link_capacity: int = 1
         metadata: list[str] = []
         try:
@@ -181,7 +217,7 @@ class Parser():
                 raise ValueError("Error too much '-' in the connections line")
             if len(words) > 2:
                 metadata.append(
-                    words[2].word.replace("[", "").replace("]", ""))
+                    words[2].replace("[", "").replace("]", ""))
                 metadata = metadata[0].split('=')
                 if len(metadata) < 2:
                     raise ValueError("Error in a metadata of a connection. ",
