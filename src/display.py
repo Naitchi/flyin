@@ -147,7 +147,10 @@ class Display():
         Args:
             data: All hubs in the simulation.
         """
-        hubs: list[Hub] = [hub for hub in data if hub.nb_drone]
+        hubs: list[Hub] = [
+            hub for hub in data
+            if hub.nb_drone or hub.nb_drone_waiting_restricted
+        ]
         for hub in hubs[::-1]:
             possible_move: list[PossibleMove] = []
             if hub.nb_drone_waiting_restricted:
