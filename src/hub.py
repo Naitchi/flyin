@@ -81,6 +81,22 @@ class ColorEnum(str, Enum):
         return label_map[self]
 
 
+class Drone():
+    """Represents an individual drone with unique ID and state."""
+
+    next_id: int = 1
+
+    def __init__(self):
+        """Create a new drone with a unique ID."""
+        self.id: int = Drone.next_id
+        Drone.next_id += 1
+        self.hub: str = ""
+
+    def __repr__(self) -> str:
+        """Return string representation of drone."""
+        return f"D{self.id}"
+
+
 class Connection():
     """Directed edge between two hubs with a maximum drone capacity."""
 
@@ -123,9 +139,7 @@ class Hub():
             max_cap: Maximum number of drones allowed on the hub.
             nb_drone: Initial number of drones present on the hub.
         """
-        self.nb_drone: int = nb_drone
-        self.nb_drone_transit_restricted: int = 0
-        self.nb_drone_arrived_restricted: int = 0
+        self.drones: list[Drone] = []
         self.name: str = name
         self.end: bool = end
         self.start: bool = start
@@ -138,6 +152,8 @@ class Hub():
         self.max_cap: int = max_cap
         self.connection: list[Connection] = []
         self.incoming: list[str] = []
+        self.restricted_transit_drones: list[Drone] = []
+        self.restricted_drones: list[Drone] = []
         self.remaining_cost = 9999
         if end:
             self.remaining_cost = 0

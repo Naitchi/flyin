@@ -1,4 +1,4 @@
-from .hub import Hub, Connection, ZoneEnum, ColorEnum
+from .hub import Hub, Connection, ZoneEnum, ColorEnum, Drone
 import sys
 from typing import Any
 import re
@@ -37,6 +37,13 @@ class Parser():
         if not cls.start_hub or not cls.end_hub:
             print("Error missing a start_hub or end_hub.")
             sys.exit()
+        # Create individual drone objects at the start hub
+        start = next((h for h in cls.hubs if h.start), None)
+        if start:
+            for _ in range(cls.nb_drone):
+                drone = Drone()
+                drone.hub = start.name
+                start.drones.append(drone)
         return cls.hubs
 
     @classmethod

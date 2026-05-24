@@ -37,7 +37,7 @@ class Display():
         image = pyglet.image.load("./assets/drone.png")
         sprite = pyglet.sprite.Sprite(image, x=hub.x_px-37, y=hub.y_px-37)
         label = pyglet.text.Label(
-            str(hub.nb_drone),
+            str(len(hub.drones) + len(hub.restricted_drones)),
             x=hub.x_px, y=hub.y_px,
             anchor_x="center", anchor_y="center",
             font_size=10,
@@ -141,57 +141,65 @@ class Display():
         return rslt
 
     @classmethod
-    def action(cls, data: list[Hub]) -> None:
+    def action(cls, data: list[Hub]) -> list[str]:
         """Advance the simulation by one turn.
 
         Args:
             data: All hubs in the simulation.
-        """
-        for hub in data:
-            if getattr(hub, "nb_drone_transit_restricted", 0):
-                _t = hub.nb_drone_transit_restricted
-                hub.nb_drone_arrived_restricted += _t
-                hub.nb_drone_transit_restricted = 0
-        hubs: list[Hub] = [
-            hub for hub in data
-            if hub.nb_drone or hub.nb_drone_arrived_restricted
-        ]
-        for hub in hubs[::-1]:
-            possible_move: list[PossibleMove] = []
-            if getattr(hub, "nb_drone_arrived_restricted", 0):
-                hub.nb_drone += hub.nb_drone_arrived_restricted
-                hub.nb_drone_arrived_restricted = 0
-                continue
-            if hub.end:
-                continue
-            for connection in hub.connection:
 
-                possible_move.append({
-                    "max_cap_link": connection.max_link_capacity,
-                    "hub": cls.get_hub_from_name(data, connection.linked_to),
-                })
-            possible_move.sort(key=lambda x: x["hub"].remaining_cost)
-            for best_hub in possible_move:
-                nb_drones_to_move: int = 0
-                if best_hub["hub"].max_cap > best_hub["hub"].nb_drone:
-                    nb_drones_to_move = (
-                        best_hub["hub"].max_cap - best_hub["hub"].nb_drone
+        Returns:
+            List of drone movements as strings (e.g., ["D1-hub_a", "D2-hub_b"])
+        """
+        movements: list[str] = []
+
+        for hub in data:
+            if hub.restricted_drones:
+                hub.drones.extend(hub.restricted_drones)
+                hub.restricted_drones.clear()
+
+        for hub in data:
+            for drone in list(hub.restricted_transit_drones):
+                hub.restricted_transit_drones.remove(drone)
+                hub.restricted_drones.append(drone)
+                movements.append(f"{drone}-{hub.name}")
+
+        for hub in data[::-1]:
+            if not hub.drones or hub.end:
+                continue
+
+            drones_to_move = list(hub.drones)
+            for drone in drones_to_move:
+                possible_moves = []
+                for connection in hub.connection:
+                    dest = cls.get_hub_from_name(
+                        data, connection.linked_to
                     )
-                    if nb_drones_to_move > best_hub["max_cap_link"]:
-                        nb_drones_to_move = best_hub["max_cap_link"]
-                    if nb_drones_to_move > hub.nb_drone:
-                        nb_drones_to_move = hub.nb_drone
-                    if best_hub["hub"].zone == ZoneEnum.RESTRICTED:
-                        best_hub["hub"].nb_drone_transit_restricted += (
-                            nb_drones_to_move
-                        )
-                        hub.nb_drone -= nb_drones_to_move
-                    elif best_hub["hub"].zone in (
-                        ZoneEnum.NORMAL,
-                        ZoneEnum.PRIORITY,
-                    ):
-                        best_hub["hub"].nb_drone += nb_drones_to_move
-                        hub.nb_drone -= nb_drones_to_move
+                    if dest.end or len(dest.drones) < dest.max_cap:
+                        possible_moves.append({
+                            "hub": dest,
+                            "connection": connection,
+                        })
+
+                if not possible_moves:
+                    continue
+
+                # Sort by remaining cost
+                possible_moves.sort(
+                    key=lambda x: x["hub"].remaining_cost
+                )
+                best_move = possible_moves[0]
+                dest_hub = best_move["hub"]
+
+                hub.drones.remove(drone)
+                if dest_hub.zone == ZoneEnum.RESTRICTED:
+                    dest_hub.restricted_transit_drones.append(drone)
+                    movements.append(f"{drone}-{dest_hub.name}")
+                else:
+                    dest_hub.drones.append(drone)
+                    movements.append(f"{drone}-{dest_hub.name}")
+                drone.hub = dest_hub.name
+
+        return movements
 
     @classmethod
     def make_legend_item(
@@ -277,7 +285,7 @@ class Display():
             cercles.append(cls.make_circle(x, y, hub))
             borders.append(cls.make_circle(x, y, hub, 27, (117, 124, 136)))
             labels.append(cls.make_label(x, y, text, hub))
-            if hub.nb_drone:
+            if hub.drones or hub.restricted_drones:
                 drone, label_drone = cls.make_drone(hub)
                 drones.append(drone)
                 label_drones.append(label_drone)
@@ -398,15 +406,25 @@ class Display():
 
         def step() -> None:
             """Advance one simulation step and refresh drone sprites."""
-            cls.action(hubs)
+            movements = cls.action(hubs)
+            if movements:
+                print(" ".join(movements))
             drones.clear()
             label_drones.clear()
             for hub in hubs:
-                if hub.nb_drone:
+                if hub.drones or hub.restricted_drones:
                     drone, label_drone = cls.make_drone(hub)
                     drones.append(drone)
                     label_drones.append(label_drone)
             window.dispatch_event("on_draw")
+            if not any(
+                hub.drones
+                or hub.restricted_drones
+                or hub.restricted_transit_drones
+                for hub in hubs
+                if not hub.end
+            ):
+                window.close()
 
         def update(dt: float) -> None:
             """Pyglet clock callback that advances the simulation."""
@@ -444,7 +462,5 @@ class Display():
                 cls.legend_visible = not cls.legend_visible
             if symbol == pyglet.window.key.RIGHT:
                 step()
-                for hub in hubs:
-                    print(hub.name, hub.nb_drone)
 
         pyglet.app.run()
