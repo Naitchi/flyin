@@ -13,31 +13,62 @@ class ZoneEnum(str, Enum):
 class ColorEnum(str, Enum):
     """Enumeration of visual hub colors used by the renderer."""
 
-    RED = 'red'
-    GREEN = 'green'
-    BLUE = 'blue'
-    YELLOW = 'yellow'
-    NONE = 'none'
+    RED = "red"
+    GREEN = "green"
+    BLUE = "blue"
+    YELLOW = "yellow"
+    PURPLE = "purple"
+    BLACK = "black"
+    BROWN = "brown"
+    MAROON = "maroon"
+    ORANGE = "orange"
+    GOLD = "gold"
+    DARKRED = "darkred"
+    VIOLET = "violet"
+    CRIMSON = "crimson"
+    RAINBOW = "rainbow"
+    CYAN = "cyan"  # TODO add ca
+    NONE = "none"
 
     def to_rgb(self) -> tuple[int, int, int]:
         """Return the RGB color associated with the enum value."""
         color_map: dict[ColorEnum, tuple[int, int, int]] = {
-            ColorEnum.RED:    (220, 60,  60),
-            ColorEnum.GREEN:  (60,  200, 80),
-            ColorEnum.BLUE:   (60,  100, 220),
-            ColorEnum.YELLOW: (240, 210, 40),
-            ColorEnum.NONE:   (180, 180, 180),
+            ColorEnum.RED:      (220, 60,  60),
+            ColorEnum.GREEN:    (60,  200, 80),
+            ColorEnum.BLUE:     (60,  100, 220),
+            ColorEnum.YELLOW:   (240, 210, 40),
+            ColorEnum.PURPLE:   (150, 50,  200),
+            ColorEnum.BLACK:    (0,   0,   0),
+            ColorEnum.BROWN:    (139, 69,  19),
+            ColorEnum.MAROON:   (128, 0,   0),
+            ColorEnum.ORANGE:   (255, 165, 0),
+            ColorEnum.GOLD:     (255, 215, 0),
+            ColorEnum.DARKRED:  (139, 0,   0),
+            ColorEnum.VIOLET:   (238, 130, 238),
+            ColorEnum.CRIMSON:  (220, 20,  60),
+            ColorEnum.RAINBOW:  (255, 127, 0),
+            ColorEnum.NONE:     (180, 180, 180),
         }
         return color_map[self]
 
     def label_rgb(self) -> tuple[int, int, int, int]:
         """Return the RGBA color used for labels on this color."""
         label_map: dict[ColorEnum, tuple[int, int, int, int]] = {
-            ColorEnum.RED:    (255, 255, 255, 255),
-            ColorEnum.GREEN:  (0,   0,   0,   255),
-            ColorEnum.BLUE:   (255, 255, 255, 255),
-            ColorEnum.YELLOW: (30,  30,  30,  255),
-            ColorEnum.NONE:   (0,   0,   0,   255),
+            ColorEnum.RED:      (255, 255, 255, 255),
+            ColorEnum.GREEN:    (0,   0,   0,   255),
+            ColorEnum.BLUE:     (255, 255, 255, 255),
+            ColorEnum.YELLOW:   (30,  30,  30,  255),
+            ColorEnum.PURPLE:   (255, 255, 255, 255),
+            ColorEnum.BLACK:    (255, 255, 255, 255),
+            ColorEnum.BROWN:    (255, 255, 255, 255),
+            ColorEnum.MAROON:   (255, 255, 255, 255),
+            ColorEnum.ORANGE:   (0,   0,   0,   255),
+            ColorEnum.GOLD:     (0,   0,   0,   255),
+            ColorEnum.DARKRED:  (255, 255, 255, 255),
+            ColorEnum.VIOLET:   (0,   0,   0,   255),
+            ColorEnum.CRIMSON:  (255, 255, 255, 255),
+            ColorEnum.RAINBOW:  (255, 255, 255, 255),
+            ColorEnum.NONE:     (0,   0,   0,   255),
         }
         return label_map[self]
 

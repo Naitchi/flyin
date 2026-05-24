@@ -17,7 +17,7 @@ class FlyInApp():
         argparser.add_argument(
             "--map",
             type=str,
-            default="./maps/easy/01_linear_path.txt",
+            default="./maps/challenger/01_the_impossible_dream.txt",
             help="Input file for your map"
         )
         args = argparser.parse_args()
@@ -49,6 +49,7 @@ class FlyInApp():
         """
         for connection in hub.connection:
             next_hub = cls.get_hub_from_name(connection.linked_to)
+            old_score = next_hub.score
             if next_hub.zone == ZoneEnum.PRIORITY and \
                     hub.score + 1 < next_hub.score:
                 next_hub.score = hub.score + 1
@@ -58,7 +59,8 @@ class FlyInApp():
             elif next_hub.zone == ZoneEnum.RESTRICTED and \
                     hub.score + 3 < next_hub.score:
                 next_hub.score = hub.score + 3
-            cls.calculate_score(next_hub)
+            if next_hub.score < old_score:
+                cls.calculate_score(next_hub)
 
     @classmethod
     def get_hub_from_name(cls, name: str) -> Hub:

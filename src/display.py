@@ -170,6 +170,8 @@ class Display():
                     )
                     if nb_drones_to_move > best_hub["max_cap_link"]:
                         nb_drones_to_move = best_hub["max_cap_link"]
+                    if nb_drones_to_move > hub.nb_drone:
+                        nb_drones_to_move = hub.nb_drone
                     if best_hub["hub"].zone == ZoneEnum.RESTRICTED:
                         best_hub["hub"].nb_drone_waiting_restricted += (
                             nb_drones_to_move
