@@ -148,7 +148,7 @@ class Parser():
             color, zone_str, max_drones = cls.get_metadata_hub(
                 [word.replace("[", "").replace("]", "") for word in metadata])
             try:
-                zone_enum = ZoneEnum(zone_str)
+                zone_enum = ZoneEnum(zone_str.lower())
             except ValueError:
                 raise ValueError(f"Unknown zone type: {zone_str}")
             hub_kwargs = {
@@ -193,10 +193,12 @@ class Parser():
         except (ValueError, Exception) as e:
             print(e)
             sys.exit()
+        if len(color_str.split(' ')) != 1:
+            raise ValueError(f"Invalid color token: {color_str}")
         try:
             color_enum = ColorEnum(color_str)
         except ValueError:
-            raise ValueError(f"Unknown color type: {color_str}")
+            color_enum = ColorEnum.RED
         return (color_enum, zone, max_drones)
 
     @classmethod
