@@ -124,7 +124,8 @@ class Hub():
             nb_drone: Initial number of drones present on the hub.
         """
         self.nb_drone: int = nb_drone
-        self.nb_drone_waiting_restricted: int = 0
+        self.nb_drone_transit_restricted: int = 0
+        self.nb_drone_arrived_restricted: int = 0
         self.name: str = name
         self.end: bool = end
         self.start: bool = start

@@ -147,15 +147,21 @@ class Display():
         Args:
             data: All hubs in the simulation.
         """
+        for hub in data:
+            if getattr(hub, "nb_drone_transit_restricted", 0):
+                _t = hub.nb_drone_transit_restricted
+                hub.nb_drone_arrived_restricted += _t
+                hub.nb_drone_transit_restricted = 0
         hubs: list[Hub] = [
             hub for hub in data
-            if hub.nb_drone or hub.nb_drone_waiting_restricted
+            if hub.nb_drone or hub.nb_drone_arrived_restricted
         ]
         for hub in hubs[::-1]:
             possible_move: list[PossibleMove] = []
-            if hub.nb_drone_waiting_restricted:
-                hub.nb_drone += hub.nb_drone_waiting_restricted
-                hub.nb_drone_waiting_restricted = 0
+            if getattr(hub, "nb_drone_arrived_restricted", 0):
+                hub.nb_drone += hub.nb_drone_arrived_restricted
+                hub.nb_drone_arrived_restricted = 0
+                continue
             if hub.end:
                 continue
             for connection in hub.connection:
@@ -176,7 +182,7 @@ class Display():
                     if nb_drones_to_move > hub.nb_drone:
                         nb_drones_to_move = hub.nb_drone
                     if best_hub["hub"].zone == ZoneEnum.RESTRICTED:
-                        best_hub["hub"].nb_drone_waiting_restricted += (
+                        best_hub["hub"].nb_drone_transit_restricted += (
                             nb_drones_to_move
                         )
                         hub.nb_drone -= nb_drones_to_move
