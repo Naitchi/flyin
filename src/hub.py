@@ -27,7 +27,9 @@ class ColorEnum(str, Enum):
     VIOLET = "violet"
     CRIMSON = "crimson"
     RAINBOW = "rainbow"
-    CYAN = "cyan"  # TODO add ca
+    CYAN = "cyan"
+    LIME = "lime"
+    MAGENTA = "magenta"
     NONE = "none"
 
     def to_rgb(self) -> tuple[int, int, int]:
@@ -47,6 +49,9 @@ class ColorEnum(str, Enum):
             ColorEnum.VIOLET:   (238, 130, 238),
             ColorEnum.CRIMSON:  (220, 20,  60),
             ColorEnum.RAINBOW:  (255, 127, 0),
+            ColorEnum.CYAN:     (0,   255, 255),
+            ColorEnum.LIME:     (50,  205, 50),
+            ColorEnum.MAGENTA:  (255, 0,   255),
             ColorEnum.NONE:     (180, 180, 180),
         }
         return color_map[self]
@@ -68,6 +73,9 @@ class ColorEnum(str, Enum):
             ColorEnum.VIOLET:   (0,   0,   0,   255),
             ColorEnum.CRIMSON:  (255, 255, 255, 255),
             ColorEnum.RAINBOW:  (255, 255, 255, 255),
+            ColorEnum.CYAN:     (0,   0,   0,   255),
+            ColorEnum.LIME:     (0,   0,   0,   255),
+            ColorEnum.MAGENTA:  (255, 255, 255, 255),
             ColorEnum.NONE:     (0,   0,   0,   255),
         }
         return label_map[self]
