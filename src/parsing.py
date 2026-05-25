@@ -164,6 +164,10 @@ class Parser():
                 zone_enum = ZoneEnum(zone_str.lower())
             except ValueError:
                 raise ValueError(f"Unknown zone type: {zone_str}")
+            if start and cls.nb_drone > max_drones:
+                raise ValueError(
+                    "Error: number of drones exceeds start hub capacity."
+                )
             hub_kwargs = {
                 "start": start,
                 "end": end,
@@ -172,7 +176,7 @@ class Parser():
                 "y": y,
                 "color": color,
                 "zone": zone_enum,
-                "max_cap": cls.nb_drone if (start or end) else max_drones,
+                "max_cap": max_drones,
             }
             if start:
                 hub_kwargs["nb_drone"] = cls.nb_drone

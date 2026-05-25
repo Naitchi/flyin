@@ -176,7 +176,7 @@ class Display():
                     )
                     if dest.remaining_cost == 9999:
                         continue
-                    if dest.end or len(dest.drones) < dest.max_cap:
+                    if len(dest.drones) < dest.max_cap:
                         possible_moves.append({
                             "hub": dest,
                             "connection": connection,
@@ -418,6 +418,10 @@ class Display():
                     drones.append(drone)
                     label_drones.append(label_drone)
             window.dispatch_event("on_draw")
+            end_hub = next(hub for hub in hubs if hub.end)
+            if len(end_hub.drones) >= end_hub.max_cap:
+                window.close()
+                return
             if not any(
                 hub.drones
                 or hub.restricted_drones

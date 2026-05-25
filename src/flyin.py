@@ -17,7 +17,7 @@ class FlyInApp():
         argparser.add_argument(
             "--map",
             type=str,
-            default="./maps/challenger/01_the_impossible_dream.txt",
+            default="./maps/easy/01_linear_path.txt",
             help="Input file for your map"
         )
         args = argparser.parse_args()
