@@ -13,7 +13,6 @@ class Parser():
     hubs: list[Hub] = []
     coordonnates: set[tuple[int, int]] = set()
 
-    # TODO check hubs/properties and compare with the map after parsing
     @classmethod
     def run_trough_file(cls, content: str) -> list[Hub]:
         """Parse a map file content into a list of hubs.
@@ -37,7 +36,6 @@ class Parser():
         if not cls.start_hub or not cls.end_hub:
             print("Error missing a start_hub or end_hub.")
             sys.exit()
-        # Create individual drone objects at the start hub
         start = next((h for h in cls.hubs if h.start), None)
         if start:
             for _ in range(cls.nb_drone):

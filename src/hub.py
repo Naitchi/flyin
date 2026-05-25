@@ -86,7 +86,7 @@ class Drone():
 
     next_id: int = 1
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create a new drone with a unique ID."""
         self.id: int = Drone.next_id
         Drone.next_id += 1
@@ -100,7 +100,7 @@ class Drone():
 class Connection():
     """Directed edge between two hubs with a maximum drone capacity."""
 
-    def __init__(self, linked_to: str, max_link_capacity: int):
+    def __init__(self, linked_to: str, max_link_capacity: int) -> None:
         """Create a connection to another hub.
 
         Args:
@@ -125,7 +125,7 @@ class Hub():
         color: ColorEnum,
         max_cap: int,
         nb_drone: int = 0
-    ):
+    ) -> None:
         """Initialize a hub with coordinates, metadata, and capacity.
 
         Args:

@@ -174,6 +174,8 @@ class Display():
                     dest = cls.get_hub_from_name(
                         data, connection.linked_to
                     )
+                    if dest.remaining_cost == 9999:
+                        continue
                     if dest.end or len(dest.drones) < dest.max_cap:
                         possible_moves.append({
                             "hub": dest,
@@ -183,7 +185,6 @@ class Display():
                 if not possible_moves:
                     continue
 
-                # Sort by remaining cost
                 possible_moves.sort(
                     key=lambda x: x["hub"].remaining_cost
                 )
@@ -243,7 +244,7 @@ class Display():
     @staticmethod
     def make_help_label(window: Any, use_legend: bool) -> pyglet.text.Label:
         """Create the on-screen help label."""
-        hints = ["Echap : quit"]
+        hints = ["ESCAPE: quit", "RIGHT: advance one step"]
         if use_legend:
             hints.append("L : Show hubs names")
         return pyglet.text.Label(

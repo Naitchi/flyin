@@ -46,6 +46,9 @@ class FlyInApp():
         Args:
             hub: Current hub used as the recursion source (typically end).
         """
+        if hub.start:
+            return
+
         weights = {
             ZoneEnum.PRIORITY: 1,
             ZoneEnum.NORMAL: 2,
@@ -53,9 +56,11 @@ class FlyInApp():
         }
         for incoming_name in hub.incoming:
             prev_hub = cls.get_hub_from_name(incoming_name)
-            cost = hub.remaining_cost + weights.get(hub.zone, 1)
+            cost = hub.remaining_cost + weights.get(prev_hub.zone, 1)
             if cost < prev_hub.remaining_cost:
                 prev_hub.remaining_cost = cost
+                if prev_hub.start:
+                    continue
                 cls.calculate_remaining_cost(prev_hub)
 
     @classmethod

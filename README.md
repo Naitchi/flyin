@@ -8,7 +8,7 @@ Fly-in is a graph-based drone flow simulation.
 The goal is to route a fleet of drones from one `start_hub` to one `end_hub` through a network of hubs and directed connections while respecting:
 
 - hub capacities (`max_drones`),
-- connection capacities (`max_link_capacity`),
+- connection metadata (`max_link_capacity`) parsed from maps,
 - and zone/color metadata validated as enums during parsing.
 
 The project reads a map file, builds an internal graph, computes route priorities, and runs a turn-by-turn visual simulation with Pyglet.
@@ -24,6 +24,7 @@ The project reads a map file, builds an internal graph, computes route prioritie
 - Zone-aware behavior (including delayed movement through restricted zones)
 - Fullscreen visual simulation (nodes, links, drone counters)
 - Optional legend mode for dense maps
+- OOP design
 
 ---
 
@@ -50,7 +51,12 @@ Default map:
 
 Custom map:
 
-- `make run ARGS="--map ./maps/medium/03_priority_puzzle.txt"`
+`make run ARGS="--map <map_path>"`
+- example: `make run ARGS="--map ./maps/medium/03_priority_puzzle.txt"`
+
+Run all maps one by one:
+
+- `./run_all_maps.sh`
 
 Direct execution is also possible:
 
@@ -100,7 +106,7 @@ Validation strategy includes:
 
 ### 2) Hub scoring (route priority)
 
-Before simulation, [src/flyin.py](src/flyin.py) computes a score from the start hub to all reachable hubs.
+Before simulation, [src/flyin.py](src/flyin.py) computes a score from the end hub backward through incoming edges to all reachable hubs.
 
 Current scoring policy:
 
@@ -108,7 +114,7 @@ Current scoring policy:
 - `normal` transition cost = 2
 - `restricted` transition cost = 3
 
-The recursive propagation updates a hub score when a cheaper value is found.
+The recursive propagation updates a hub score when a cheaper value is found, and stops recursing once the `start_hub` is reached.
 This score acts as a heuristic for movement decisions.
 
 ### 3) Turn-by-turn movement
@@ -120,13 +126,13 @@ At each turn, [src/display.py](src/display.py) performs:
 3. sort destinations by score (lower score first),
 4. move drones while enforcing:
 	 - destination remaining capacity,
-	 - link capacity,
+	 - reachable destination filtering (`remaining_cost != 9999`),
 	 - zone behavior.
 
 Zone behavior detail:
 
 - `normal` and `priority`: drones are added immediately to destination hub.
-- `restricted`: drones are queued via `nb_drone_waiting_restricted` and become available on the next turn.
+- `restricted`: drones first enter `restricted_transit_drones`, then become `restricted_drones`, and only rejoin movable drones on the following turn.
 
 This gives a simple greedy strategy guided by precomputed costs and constrained by capacities.
 
@@ -195,14 +201,31 @@ AI tools were used as an assistant during development, mainly for:
 
 - README drafting and structuring,
 - refactoring suggestions (readability, line length, small style improvements),
-- quick review of wording and documentation clarity.
+- fetch each unique color in the maps for color Enum and giving me their RGB values.
+- To create the `run_all_maps.sh` script.
 
 AI was **not** used as a blind generator for the whole project.
 Final design choices, algorithm decisions, debugging, and validation were performed by the project author.
 
 ---
 
-## Notes
+## Example
 
-This repository includes progressively harder benchmark maps, including a challenger scenario intended for stress-testing and optimization research.
+Use an existing map from the `maps` folder for a quick example.
 
+Run the `easy/01_linear_path.txt` map:
+
+```bash
+make run ARGS="--map ./maps/easy/01_linear_path.txt"
+```
+
+Typical expected console output (movement lines printed each step):
+
+```
+D1-<hub_name> D2-<hub_name>
+... (subsequent steps until all drones reach the end hub)
+```
+
+Notes:
+- The program prints movement lines in the format `D<id>-<hub_name>` each simulation step.
+- The exact ordering can vary but follows the greedy heuristic based on precomputed remaining costs.
