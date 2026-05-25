@@ -59,9 +59,11 @@ class Parser():
             else:
                 raise ValueError
         except (ValueError, Exception):
-            print("Error in value of drone. ",
-                  "The value must be a positif number. ",
-                  "The first line should be: nb_drone: <nb_drone>")
+            print(
+                "Error in value of drone. The value must be a positive "
+                "number. "
+                "The first line should be: nb_drones: <nb_drones>"
+            )
             sys.exit()
 
     @classmethod
@@ -79,20 +81,24 @@ class Parser():
         metadata: list[str] = []
         try:
             if len(words) < 4:
-                raise ValueError("Error, not enough arguments on hub. ",
-                                 "<start_/end_>hub: <name> <x> <y> [metadata]")
+                raise ValueError(
+                    "Error: not enough arguments on hub. "
+                    "Expected: <start_/end_>hub: <name> <x> <y> [metadata]"
+                )
             if words[0] == "start_hub:":
                 if cls.start_hub:
                     raise ValueError(
-                        "Error Two or more start_hub. ",
-                        "There should be only one.")
+                        "Error: two or more start_hub entries found. "
+                        "There should be only one."
+                    )
                 cls.start_hub = True
                 start = True
             elif words[0] == "end_hub:":
                 if cls.end_hub:
                     raise ValueError(
-                        "Error Two or more end_hub. ",
-                        "There should be only one.")
+                        "Error: two or more end_hub entries found. "
+                        "There should be only one."
+                    )
                 cls.end_hub = True
                 end = True
             name = words[1]
@@ -140,16 +146,18 @@ class Parser():
         max_drones: int = 1
         try:
             if not re.fullmatch(r"\w+", name):
-                raise ValueError("Error in name of hub. ",
-                                 "The value of name must be a letter ",
-                                 "upper or lower caps or underscore. ",
-                                 "With no space or '-'.")
+                raise ValueError(
+                    "Error in name of hub. The value of name must be a letter "
+                    "upper or lower caps or underscore. With no space or '-'."
+                )
             x = int(x)
             y = int(y)
             cls.coordonnates.add((x, y))
             if len(cls.coordonnates) > len(cls.hubs)+1:
-                raise ValueError("Error in coordonnates of hub. ",
-                                 "Two hubs cannot have the same coordonnates.")
+                raise ValueError(
+                    "Error in coordinates of hub. Two hubs cannot have the "
+                    "same coordinates."
+                )
             color, zone_str, max_drones = cls.get_metadata_hub(
                 [word.replace("[", "").replace("]", "") for word in metadata])
             try:
@@ -217,32 +225,39 @@ class Parser():
         metadata: list[str] = []
         try:
             if len(words) < 2:
-                raise ValueError("Error, not enough arguments on connection. ",
-                                 "connection: <name1>-<name2> [metadata]")
+                raise ValueError(
+                    "Error: not enough arguments on connection. "
+                    "Expected: connection: <name1>-<name2> [metadata]"
+                )
             connections = words[1].split('-')
             if len(connections) > 2:
-                raise ValueError("Error too much '-' in the connections line")
+                raise ValueError(
+                    "Error: too many '-' in the connections line."
+                )
             if len(words) > 2:
                 metadata.append(
                     words[2].replace("[", "").replace("]", ""))
                 metadata = metadata[0].split('=')
                 if len(metadata) < 2:
-                    raise ValueError("Error in a metadata of a connection. ",
-                                     "Should be connection: <name1>-<name2> ",
-                                     "[max_link_capacity=<number>]")
+                    raise ValueError(
+                        "Error in a metadata of a connection. Expected: "
+                        "connection: <name1>-<name2> "
+                        "[max_link_capacity=<number>]"
+                    )
                 max_link_capacity = int(metadata[1])
             hub1: Hub = next(
                 (h for h in cls.hubs if h.name == connections[0]), None)
             hub2: Hub = next(
                 (h for h in cls.hubs if h.name == connections[1]), None)
             if not hub1 or not hub2:
-                raise ValueError("Error hub name not found in connection.")
+                raise ValueError("Error: hub name not found in connection.")
             if any(
                 connection.linked_to == hub2.name
                 for connection in hub1.connection
             ):
-                raise ValueError("Error two connection between the same ",
-                                 "hub.")
+                raise ValueError(
+                    "Error: two connections between the same hub."
+                )
             hub1.connection.append(
                 Connection(hub2.name, max_link_capacity))
             hub2.incoming.append(hub1.name)
