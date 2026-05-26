@@ -33,6 +33,7 @@ class Parser():
                 cls.check_for_hub(words)
             elif words[0] == "connection:":
                 cls.add_connection(words)
+        cls.check_duplicate_hub_names()
         if not cls.start_hub or not cls.end_hub:
             print("Error missing a start_hub or end_hub.")
             sys.exit()
@@ -41,8 +42,17 @@ class Parser():
             for _ in range(cls.nb_drone):
                 drone = Drone()
                 drone.hub = start.name
+                drone.display_path = start.name
                 start.drones.append(drone)
         return cls.hubs
+
+    @classmethod
+    def check_duplicate_hub_names(cls) -> None:
+        """Validate that all parsed hubs have unique names."""
+        hub_names = [hub.name for hub in cls.hubs]
+        if len(hub_names) != len(set(hub_names)):
+            print("Error: two hubs cannot have the same name.")
+            sys.exit()
 
     @classmethod
     def check_for_nb_drone(cls, words: list[str]) -> None:

@@ -161,12 +161,17 @@ class Display():
             for drone in list(hub.restricted_transit_drones):
                 hub.restricted_transit_drones.remove(drone)
                 hub.restricted_drones.append(drone)
+                drone.display_path = hub.name
                 movements.append(f"{drone}-{hub.name}")
 
         for hub in data[::-1]:
             if not hub.drones or hub.end:
                 continue
 
+            remaining_link_capacity: dict[str, int] = {
+                connection.linked_to: connection.max_link_capacity
+                for connection in hub.connection
+            }
             drones_to_move = list(hub.drones)
             for drone in drones_to_move:
                 possible_moves = []
@@ -175,6 +180,8 @@ class Display():
                         data, connection.linked_to
                     )
                     if dest.remaining_cost == 9999:
+                        continue
+                    if remaining_link_capacity[connection.linked_to] <= 0:
                         continue
                     if len(dest.drones) < dest.max_cap:
                         possible_moves.append({
@@ -192,10 +199,13 @@ class Display():
                 dest_hub = best_move["hub"]
 
                 hub.drones.remove(drone)
+                remaining_link_capacity[best_move["connection"].linked_to] -= 1
                 if dest_hub.zone == ZoneEnum.RESTRICTED:
+                    drone.display_path = f"{hub.name}-{dest_hub.name}"
                     dest_hub.restricted_transit_drones.append(drone)
-                    movements.append(f"{drone}-{dest_hub.name}")
+                    movements.append(f"{drone}-{drone.display_path}")
                 else:
+                    drone.display_path = dest_hub.name
                     dest_hub.drones.append(drone)
                     movements.append(f"{drone}-{dest_hub.name}")
                 drone.hub = dest_hub.name

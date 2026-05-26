@@ -91,6 +91,7 @@ class Drone():
         self.id: int = Drone.next_id
         Drone.next_id += 1
         self.hub: str = ""
+        self.display_path: str = ""
 
     def __repr__(self) -> str:
         """Return string representation of drone."""

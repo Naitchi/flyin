@@ -17,7 +17,7 @@ class FlyInApp():
         argparser.add_argument(
             "--map",
             type=str,
-            default="./maps/easy/01_linear_path.txt",
+            default="./maps/hard/02_capacity_hell.txt",
             help="Input file for your map"
         )
         args = argparser.parse_args()
@@ -56,7 +56,9 @@ class FlyInApp():
         }
         for incoming_name in hub.incoming:
             prev_hub = cls.get_hub_from_name(incoming_name)
-            cost = hub.remaining_cost + weights.get(prev_hub.zone, 1)
+            if prev_hub.zone == ZoneEnum.BLOCKED:
+                continue
+            cost = hub.remaining_cost + weights.get(prev_hub.zone, 2)
             if cost < prev_hub.remaining_cost:
                 prev_hub.remaining_cost = cost
                 if prev_hub.start:

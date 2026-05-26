@@ -8,8 +8,8 @@ Fly-in is a graph-based drone flow simulation.
 The goal is to route a fleet of drones from one `start_hub` to one `end_hub` through a network of hubs and directed connections while respecting:
 
 - hub capacities (`max_drones`),
+- zone/color metadata validated as enums during parsing.
 - connection metadata (`max_link_capacity`) parsed from maps,
-- and zone/color metadata validated as enums during parsing.
 
 The project reads a map file, builds an internal graph, computes route priorities, and runs a turn-by-turn visual simulation with Pyglet.
 
@@ -52,11 +52,11 @@ Default map:
 Custom map:
 
 `make run ARGS="--map <map_path>"`
-- example: `make run ARGS="--map ./maps/medium/03_priority_puzzle.txt"`
+- example: `make run ARGS="--map=./maps/medium/03_priority_puzzle.txt"`
 
 Direct execution is also possible:
 
-- `uv run python -m src --map ./maps/easy/01_linear_path.txt`
+- `uv run python -m src --map=./maps/easy/01_linear_path.txt`
 
 ### Debug / Quality
 
@@ -73,7 +73,7 @@ Each map starts with the drone count, then hub declarations, then connections:
 
 ```txt
 nb_drones: 5
-start_hub: A 0 0 [color=green] [zone=priority]
+start_hub: A 0 0 [color=green zone=priority]
 hub: B 2 1 [max_drones=2]
 end_hub: Z 5 1 [color=red]
 connection: A-B [max_link_capacity=2]
@@ -218,10 +218,12 @@ make run ARGS="--map ./maps/easy/01_linear_path.txt"
 Typical expected console output (movement lines printed each step):
 
 ```
-D1-<hub_name> D2-<hub_name>
-... (subsequent steps until all drones reach the end hub)
+D1-waypoint1
+D1-waypoint2 D2-waypoint1
+D1-goal D2-waypoint2
+D2-goal
 ```
 
 Notes:
-- The program prints movement lines in the format `D<id>-<hub_name>` each simulation step.
+- The program prints movement lines in the format `D<id>-<hub_name>` each simulation step, and `D<id>-<name1>-<name2>` while a drone is waiting on a connection to a restricted hub.
 - The exact ordering can vary but follows the greedy heuristic based on precomputed remaining costs.
