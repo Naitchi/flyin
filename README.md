@@ -54,10 +54,6 @@ Custom map:
 `make run ARGS="--map <map_path>"`
 - example: `make run ARGS="--map ./maps/medium/03_priority_puzzle.txt"`
 
-Run all maps one by one:
-
-- `./run_all_maps.sh`
-
 Direct execution is also possible:
 
 - `uv run python -m src --map ./maps/easy/01_linear_path.txt`
