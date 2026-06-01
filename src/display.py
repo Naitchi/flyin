@@ -3,14 +3,7 @@ import pyglet
 
 from .hub import Hub, ZoneEnum
 from collections import Counter
-from typing import Any, Callable, TypedDict
-
-
-class PossibleMove(TypedDict):
-    """Structure representing a potential drone destination."""
-
-    max_cap_link: int
-    hub: Hub
+from typing import Any, Callable
 
 
 class Display():
